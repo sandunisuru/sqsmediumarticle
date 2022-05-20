@@ -19,7 +19,9 @@ module.exports.messageProducer = async (event) => {
     }).promise();
   }
 
-  return true;
+  return {
+    statusCode: 200
+  };
 };
 
 module.exports.messageConsumer = async (event) => {
@@ -31,6 +33,9 @@ module.exports.messageConsumer = async (event) => {
     for await (const message of sqsRecords) {
       if (message.body === 'failed')
         batchItemFailures.push({ itemIdentifier: message.messageId })
+
+      if (message.body === 'success')
+        console.log("It is success")
     }
   }
   return { batchItemFailures };
