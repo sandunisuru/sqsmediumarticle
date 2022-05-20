@@ -1,0 +1,42 @@
+service: mediumsqs
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: 'Allow'
+      Resource: ['*']
+      Action: ['sqs:*']
+  environment: 
+    QUEUE_URL: !Ref MediumSQSArticleQueue
+  
+functions:
+  messageProducer:
+    handler: handler.messageProducer
+    events:
+      - http:
+          path: mediumsqs/produce
+          method: get
+  
+  messageConsumer:
+    handler: handler.messageConsumer
+    events:
+      - sqs:
+          arn:
+            Fn::GetAtt:
+              - MediumSQSArticleQueue
+              - Arn
+          batchSize: 50
+          maximumBatchingWindow: 10
+          functionResponseType: 'ReportBatchItemFailures' #Add this Response type to serverless.yml
+
+resources:
+  Resources:
+    MediumSQSArticleQueue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: "MediumSQSArticleQueue"
+        VisibilityTimeout: 200
